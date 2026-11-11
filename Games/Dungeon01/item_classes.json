@@ -1,0 +1,117 @@
+[
+  {
+    "className": "Weapon_Sword_1H",
+    "category": "Weapon",
+    "description": "One-handed bladed melee weapon (Short Sword, Long Sword, Rapier, Scimitar)",
+    "defaultSprite": "weapon",
+    "fields": [
+      { "name": "material", "type": "string", "default": "Iron", "min": 0, "max": 0, "tooltip": "Blade material (Iron, Steel, Silver, Mithril)" },
+      { "name": "minDamage", "type": "int", "default": "3", "min": 1, "max": 50, "tooltip": "Minimum slash damage" },
+      { "name": "maxDamage", "type": "int", "default": "7", "min": 2, "max": 100, "tooltip": "Maximum slash damage" },
+      { "name": "hands", "type": "int", "default": "1", "min": 1, "max": 1, "tooltip": "Number of hands required" }
+    ]
+  },
+  {
+    "className": "Weapon_Sword_2H",
+    "category": "Weapon",
+    "description": "Two-handed heavy sword (Great Sword, Bastard Sword, Claymore)",
+    "defaultSprite": "weapon",
+    "fields": [
+      { "name": "material", "type": "string", "default": "Steel", "min": 0, "max": 0, "tooltip": "Blade material (Steel, Mithril, Adamantite)" },
+      { "name": "minDamage", "type": "int", "default": "6", "min": 2, "max": 100, "tooltip": "Minimum heavy slash damage" },
+      { "name": "maxDamage", "type": "int", "default": "14", "min": 4, "max": 200, "tooltip": "Maximum heavy slash damage" },
+      { "name": "hands", "type": "int", "default": "2", "min": 2, "max": 2, "tooltip": "Number of hands required" }
+    ]
+  },
+  {
+    "className": "Weapon_Dagger",
+    "category": "Weapon",
+    "description": "Fast, light piercing blade (Dagger, Dirk, Stiletto)",
+    "defaultSprite": "weapon",
+    "fields": [
+      { "name": "material", "type": "string", "default": "Steel", "min": 0, "max": 0, "tooltip": "Dagger material" },
+      { "name": "minDamage", "type": "int", "default": "2", "min": 1, "max": 40, "tooltip": "Minimum thrust damage" },
+      { "name": "maxDamage", "type": "int", "default": "5", "min": 2, "max": 80, "tooltip": "Maximum thrust damage" },
+      { "name": "hands", "type": "int", "default": "1", "min": 1, "max": 1, "tooltip": "Number of hands required" }
+    ]
+  },
+  {
+    "className": "Weapon_Bow",
+    "category": "Weapon",
+    "description": "Ranged arrow launcher (Short Bow, Long Bow, Crossbow)",
+    "defaultSprite": "weapon",
+    "fields": [
+      { "name": "ammoType", "type": "string", "default": "arrow", "min": 0, "max": 0, "tooltip": "Ammo type (arrow, bolt)" },
+      { "name": "range", "type": "int", "default": "6", "min": 2, "max": 15, "tooltip": "Effective attack distance in tiles" },
+      { "name": "minDamage", "type": "int", "default": "3", "min": 1, "max": 60, "tooltip": "Minimum missile damage" },
+      { "name": "maxDamage", "type": "int", "default": "8", "min": 2, "max": 120, "tooltip": "Maximum missile damage" }
+    ]
+  },
+  {
+    "className": "Weapon_Staff",
+    "category": "Weapon",
+    "description": "Two-handed channeling staff with elemental or energy procs",
+    "defaultSprite": "weapon",
+    "fields": [
+      { "name": "effectType", "type": "enum", "default": "Arcane", "min": 0, "max": 0, "tooltip": "Energy/Element Type (Arcane, Fire, Frost, Lightning, Plasma, Laser)" },
+      { "name": "procEffect", "type": "string", "default": "Arcane Bolt", "min": 0, "max": 0, "tooltip": "Special projectile or proc effect" },
+      { "name": "resourceCost", "type": "int", "default": "5", "min": 0, "max": 50, "tooltip": "Resource/Energy consumed per cast" },
+      { "name": "range", "type": "int", "default": "5", "min": 2, "max": 12, "tooltip": "Casting range in tiles" },
+      { "name": "minDamage", "type": "int", "default": "4", "min": 1, "max": 80, "tooltip": "Minimum spell damage" },
+      { "name": "maxDamage", "type": "int", "default": "10", "min": 2, "max": 160, "tooltip": "Maximum spell damage" }
+    ]
+  },
+  {
+    "className": "Weapon_Wand",
+    "category": "Weapon",
+    "description": "One-handed fast casting focus or ray device",
+    "defaultSprite": "weapon",
+    "fields": [
+      { "name": "effectType", "type": "enum", "default": "Fire", "min": 0, "max": 0, "tooltip": "Energy/Element type" },
+      { "name": "procEffect", "type": "string", "default": "Fire Spark", "min": 0, "max": 0, "tooltip": "Proc effect name" },
+      { "name": "resourceCost", "type": "int", "default": "3", "min": 0, "max": 30, "tooltip": "Resource consumed per shot" },
+      { "name": "range", "type": "int", "default": "4", "min": 2, "max": 10, "tooltip": "Wand range in tiles" }
+    ]
+  },
+  {
+    "className": "Armor_Shield",
+    "category": "Armor",
+    "description": "Off-hand defensive shield (Buckler, Heater, Tower Shield)",
+    "defaultSprite": "shield",
+    "fields": [
+      { "name": "armorRating", "type": "int", "default": "4", "min": 1, "max": 30, "tooltip": "Block defense rating" },
+      { "name": "magicResistance", "type": "int", "default": "0", "min": 0, "max": 50, "tooltip": "Magic resistance bonus" }
+    ]
+  },
+  {
+    "className": "Armor_Chest",
+    "category": "Armor",
+    "description": "Body armor protection (Tunic, Robe, Jerkin, Brigandine, Plate Armor)",
+    "defaultSprite": "armor",
+    "fields": [
+      { "name": "armorType", "type": "string", "default": "Medium", "min": 0, "max": 0, "tooltip": "Light, Medium, or Heavy" },
+      { "name": "armorRating", "type": "int", "default": "6", "min": 1, "max": 50, "tooltip": "Chest armor defense" }
+    ]
+  },
+  {
+    "className": "Consumable_Potion",
+    "category": "Consumable",
+    "description": "Drinkable alchemical elixir (Healing, Mana, Antidote)",
+    "defaultSprite": "potion",
+    "fields": [
+      { "name": "consumableType", "type": "enum", "default": "HealHP", "min": 0, "max": 0, "tooltip": "HealHP, RestoreMP, CurePoison, Buff" },
+      { "name": "effectAmount", "type": "int", "default": "50", "min": 1, "max": 999, "tooltip": "Points restored" }
+    ]
+  },
+  {
+    "className": "Container_Chest",
+    "category": "Container",
+    "description": "Storage chest, crate, or barrel with optional lock and trap mechanisms",
+    "defaultSprite": "chest",
+    "fields": [
+      { "name": "capacity", "type": "int", "default": "12", "min": 1, "max": 100, "tooltip": "Item storage capacity" },
+      { "name": "trapped", "type": "string", "default": "", "min": 0, "max": 0, "tooltip": "Trap effect if triggered" },
+      { "name": "locked", "type": "string", "default": "", "min": 0, "max": 0, "tooltip": "Required key ID" }
+    ]
+  }
+]

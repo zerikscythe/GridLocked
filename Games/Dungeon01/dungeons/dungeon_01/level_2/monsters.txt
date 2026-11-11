@@ -1,0 +1,2 @@
+# Monsters Map for Level 2
+[8, 4, S] giant_spider

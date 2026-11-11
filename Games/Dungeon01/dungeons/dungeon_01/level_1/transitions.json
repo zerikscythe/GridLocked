@@ -1,0 +1,28 @@
+[
+  {
+    "x": 5,
+    "y": 4,
+    "type": "StairsDown",
+    "targetDungeon": "dungeon_01",
+    "targetLevel": 2,
+    "targetX": 4,
+    "targetY": 4,
+    "targetFacing": "East",
+    "autoTransition": true,
+    "promptText": "Descend to Level 2"
+  },
+  {
+    "x": 7,
+    "y": 4,
+    "type": "Door",
+    "isOpen": false,
+    "isLocked": true,
+    "requiredKey": "key_iron",
+    "isTrapped": true,
+    "trapType": "PoisonDart",
+    "trapDamage": 15,
+    "openMessage": "The reinforced iron door swings open into the grand hall.",
+    "lockedMessage": "The door is locked with a heavy iron padlock.",
+    "promptText": "Open Heavy Door"
+  }
+]

@@ -1,0 +1,21 @@
+## Visual Studio / C# build artifacts
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+.vs/
+.vscode/
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosv
+*.sln.docstates
+
+## Temporary test and scratch files
+.tmp/
+*.tmp
+
+## Antigravity / Agent session local files
+relocate_gemini_data_to_d.cmd

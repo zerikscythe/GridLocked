@@ -1,0 +1,21 @@
+{
+  "name": "The Upper Crypts",
+  "lighting": {
+    "enabled": true,
+    "shadows": true,
+    "darkMaxBrightness": 0.04,
+    "invertDarkness": true,
+    "maxViewDepth": 14.5,
+    "minViewDepth": 2.5,
+    "sconceInnerRadius": 1.5,
+    "sconceOuterRadius": 5.5,
+    "lanternColor": "#FFEBC3",
+    "ambientLight": 0.0
+  },
+  "environment": {
+    "floorColor": "#DCD8C8",
+    "ceilingColor": "#5A5A5A",
+    "showFloorGrid": true,
+    "floorGridColor": "#404040"
+  }
+}

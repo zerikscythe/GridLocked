@@ -1,0 +1,19 @@
+# Items Map for Level 1
+# Syntax: [x, y, subSquare (1-4), count] itemID {optional JSON modifiers}
+
+# Spawn room loot
+[6, 4, 2, 1] rock
+[6, 4, 3, 1] key_iron
+[6, 4, 4, 1] potion_hp
+
+# Hallway obstacle (movement blocker)
+[4, 3, 1, 1] boulder
+
+# Trapped chest (using inheritance preset)
+[8, 4, 1, 1] small_chest_poison
+
+# Difficult terrain (slows movement)
+[7, 5, 2, 1] rubble_difficult
+
+# Ad-hoc custom chest
+[10, 4, 3, 1] small_chest { "locked": "key_gold", "trapped": "fireball" }

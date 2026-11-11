@@ -1,0 +1,13 @@
+{
+  " ": "floor",
+  ".": "floor",
+  "#": "wall",
+  "@": "spawn",
+  "S": "stairs_up",
+  "s": "stairs_down",
+  "D": "door",
+  "~": "void",
+  "T": "tree_oak",
+  "P": "stone_pillar",
+  "A": "altar_gold"
+}

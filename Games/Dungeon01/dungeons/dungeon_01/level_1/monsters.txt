@@ -1,0 +1,5 @@
+# Monsters & Center Occupants for Level 1
+# Syntax: [x, y, facing (N/S/E/W)] monsterID
+
+[10, 9, W] skeleton_warrior
+[14, 9, N] goblin_scout

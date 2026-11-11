@@ -1,0 +1,14 @@
+[
+  {
+    "x": 5,
+    "y": 4,
+    "type": "StairsUp",
+    "targetDungeon": "dungeon_01",
+    "targetLevel": 1,
+    "targetX": 4,
+    "targetY": 4,
+    "targetFacing": "East",
+    "autoTransition": true,
+    "promptText": "Climb up to Level 1"
+  }
+]
