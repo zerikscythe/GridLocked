@@ -50,6 +50,9 @@
     <Compile Include="..\CenterEntity.cs">
       <Link>Shared\CenterEntity.cs</Link>
     </Compile>
+    <Compile Include="..\Damage.cs">
+      <Link>Shared\Damage.cs</Link>
+    </Compile>
     <Compile Include="..\TileArchetype.cs">
       <Link>Shared\TileArchetype.cs</Link>
     </Compile>

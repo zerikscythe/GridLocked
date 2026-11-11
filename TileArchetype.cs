@@ -31,7 +31,19 @@ namespace GridLocked
 
         // Hazards (Spikes, Lava, Acid, Void)
         public bool IsHazardous { get; set; } = false;
-        public int HazardDamage { get; set; } = 0;
+        public Damage HazardEffect { get; set; } = null;
+        public int HazardDamage
+        {
+            get => HazardEffect != null ? (int)Math.Round(HazardEffect.Amount) : 0;
+            set
+            {
+                if (value <= 0 && HazardEffect == null) return;
+                if (HazardEffect == null)
+                    HazardEffect = new Damage("Hazard Damage", "Normal", value, DamageValueType.Flat);
+                else
+                    HazardEffect.Amount = value;
+            }
+        }
 
         // 3D Vector Sprite / Prop Mapping
         public string ObjectKind { get; set; } = string.Empty;
@@ -77,7 +89,7 @@ namespace GridLocked
                 CanWalkOver = false;
                 BlocksVision = false;
                 IsHazardous = true;
-                HazardDamage = 999;
+                HazardEffect = new Damage("Void Obliteration", "Void", 999, DamageValueType.Flat);
             }
             else if (type == TileType.StairsUp || type == TileType.StairsDown)
             {
@@ -107,14 +119,32 @@ namespace GridLocked
                 BreakHP = 40;
                 ObjectKind = string.IsNullOrEmpty(ObjectKind) ? "boulder" : ObjectKind;
             }
-            else if (lowerId.Contains("lava") || lowerId.Contains("fire") || lowerId.Contains("acid"))
+            else if (lowerId.Contains("lava") || lowerId.Contains("fire"))
             {
                 BaseType = TileType.Floor;
                 CanWalkThru = true;
                 CanWalkOver = true;
                 BlocksVision = false;
                 IsHazardous = true;
-                HazardDamage = 25;
+                HazardEffect = new Damage("Lava Pool", "Fire", 25, DamageValueType.PercentMaxHp, "Burn");
+            }
+            else if (lowerId.Contains("acid") || lowerId.Contains("toxic"))
+            {
+                BaseType = TileType.Floor;
+                CanWalkThru = true;
+                CanWalkOver = true;
+                BlocksVision = false;
+                IsHazardous = true;
+                HazardEffect = new Damage("Acid Pool", "Toxic", 15, DamageValueType.Flat, "Poison");
+            }
+            else if (lowerId.Contains("spike"))
+            {
+                BaseType = TileType.Floor;
+                CanWalkThru = true;
+                CanWalkOver = true;
+                BlocksVision = false;
+                IsHazardous = true;
+                HazardEffect = new Damage("Spike Trap", "Physical", 20, DamageValueType.Flat, "Bleed");
             }
             else // Standard Floor / Spawn
             {
@@ -142,6 +172,7 @@ namespace GridLocked
                 CanBeOpened = this.CanBeOpened,
                 StartsOpen = this.StartsOpen,
                 IsHazardous = this.IsHazardous,
+                HazardEffect = this.HazardEffect?.Clone(),
                 HazardDamage = this.HazardDamage,
                 ObjectKind = this.ObjectKind,
                 Description = this.Description

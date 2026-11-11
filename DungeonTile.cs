@@ -47,7 +47,19 @@ namespace GridLocked
         public bool IsOpen { get; set; } = false;
 
         public bool IsHazardous { get; set; } = false;
-        public int HazardDamage { get; set; } = 0;
+        public Damage HazardEffect { get; set; } = null;
+        public int HazardDamage
+        {
+            get => HazardEffect != null ? (int)Math.Round(HazardEffect.Amount) : 0;
+            set
+            {
+                if (value <= 0 && HazardEffect == null) return;
+                if (HazardEffect == null)
+                    HazardEffect = new Damage("Hazard Damage", "Normal", value, DamageValueType.Flat);
+                else
+                    HazardEffect.Amount = value;
+            }
+        }
 
         /// <summary>
         /// Major occupant standing at the center of the tile (Player, Monster, or Large Object).
@@ -90,7 +102,7 @@ namespace GridLocked
                 CanWalkThru = false;
                 CanWalkOver = false;
                 IsHazardous = true;
-                HazardDamage = 999;
+                HazardEffect = new Damage("Void Obliteration", "Void", 999, DamageValueType.Flat);
             }
         }
 
@@ -120,6 +132,7 @@ namespace GridLocked
             IsOpen = arch.StartsOpen;
 
             IsHazardous = arch.IsHazardous;
+            HazardEffect = arch.HazardEffect?.Clone();
             HazardDamage = arch.HazardDamage;
         }
 
@@ -205,6 +218,12 @@ namespace GridLocked
             speedMultiplier = 1.0f;
             hazardDamage = 0;
             bool found = false;
+
+            if (IsHazardous)
+            {
+                found = true;
+                hazardDamage += HazardDamage;
+            }
 
             for (int i = 0; i < 4; i++)
             {

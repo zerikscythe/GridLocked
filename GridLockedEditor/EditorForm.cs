@@ -59,7 +59,23 @@ namespace GridLockedEditor
         private CheckBox _chkTileCanBeOpened;
         private CheckBox _chkTileIsOpen;
         private CheckBox _chkTileHazardous;
-        private NumericUpDown _nudTileHazardDamage;
+        private ComboBox _cbTileHazardPreset;
+        private ComboBox _cbTileHazardType;
+        private NumericUpDown _nudTileHazardAmount;
+        private ComboBox _cbTileHazardScale;
+        private TextBox _txtTileHazardEffect;
+        private Button _btnTileSaveHazardPreset;
+        private Label _lblTileHazardSummary;
+
+        // Project Settings: Damage Types & Library
+        private ListBox _lbDamageTypes;
+        private TextBox _txtNewDamageType;
+        private Button _btnAddDamageType;
+        private Button _btnRemoveDamageType;
+        private DataGridView _dgvDamageLibrary;
+        private Button _btnAddDamagePreset;
+        private Button _btnEditDamagePreset;
+        private Button _btnRemoveDamagePreset;
         private Button _btnSpawnEntityHere;
         private GroupBox _grpTileBase;
 
@@ -522,7 +538,7 @@ namespace GridLockedEditor
             tab.Controls.Add(_inspectorPanel);
 
             // --- Card 1: Tile Base Properties & Flags ---
-            _grpTileBase = new GroupBox { Text = "📍 Tile Properties & Flags", Left = 10, Top = 10, Width = 295, Height = 215, Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Bold) };
+            _grpTileBase = new GroupBox { Text = "📍 Tile Properties & Flags", Left = 10, Top = 10, Width = 295, Height = 285, Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Bold) };
             _inspectorPanel.Controls.Add(_grpTileBase);
 
             _lblSelectedCoords = new Label { Text = "Select a tile to inspect", Left = 10, Top = 20, AutoSize = true, ForeColor = Color.DarkSlateGray, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
@@ -572,17 +588,52 @@ namespace GridLockedEditor
             _grpTileBase.Controls.Add(_chkTileIsOpen);
 
             _chkTileHazardous = new CheckBox { Text = "Hazardous", Left = 10, Top = 140, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _chkTileHazardous.CheckedChanged += (s, e) => { _nudTileHazardDamage.Enabled = _chkTileHazardous.Checked; OnTileFlagChanged(); };
+            _chkTileHazardous.CheckedChanged += (s, e) =>
+            {
+                bool on = _chkTileHazardous.Checked;
+                _cbTileHazardPreset.Enabled = on;
+                _cbTileHazardType.Enabled = on;
+                _nudTileHazardAmount.Enabled = on;
+                _cbTileHazardScale.Enabled = on;
+                _txtTileHazardEffect.Enabled = on;
+                _btnTileSaveHazardPreset.Enabled = on;
+                OnTileFlagChanged();
+            };
             _grpTileBase.Controls.Add(_chkTileHazardous);
 
-            var lblHaz = new Label { Text = "Dmg:", Left = 86, Top = 141, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _grpTileBase.Controls.Add(lblHaz);
+            _cbTileHazardPreset = new ComboBox { Left = 95, Top = 138, Width = 190, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _cbTileHazardPreset.SelectedIndexChanged += (s, e) => OnHazardPresetSelected();
+            _grpTileBase.Controls.Add(_cbTileHazardPreset);
 
-            _nudTileHazardDamage = new NumericUpDown { Left = 118, Top = 138, Width = 45, Minimum = 0, Maximum = 999, Value = 10, Enabled = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _nudTileHazardDamage.ValueChanged += (s, e) => OnTileFlagChanged();
-            _grpTileBase.Controls.Add(_nudTileHazardDamage);
+            _cbTileHazardType = new ComboBox { Left = 10, Top = 164, Width = 85, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _cbTileHazardType.SelectedIndexChanged += (s, e) => OnTileFlagChanged();
+            _grpTileBase.Controls.Add(_cbTileHazardType);
 
-            _btnSpawnEntityHere = new Button { Text = "+ Spawn Entity / Creature Here", Left = 10, Top = 172, Width = 275, Height = 28, BackColor = Color.FromArgb(46, 139, 87), ForeColor = Color.White, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold), Visible = false };
+            _nudTileHazardAmount = new NumericUpDown { Left = 100, Top = 164, Width = 55, Minimum = 0, Maximum = 9999, Value = 10, Enabled = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _nudTileHazardAmount.ValueChanged += (s, e) => OnTileFlagChanged();
+            _grpTileBase.Controls.Add(_nudTileHazardAmount);
+
+            _cbTileHazardScale = new ComboBox { Left = 160, Top = 164, Width = 125, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _cbTileHazardScale.Items.AddRange(new object[] { "Flat Amount", "% of Max HP", "% of Current HP" });
+            _cbTileHazardScale.SelectedIndex = 0;
+            _cbTileHazardScale.SelectedIndexChanged += (s, e) => OnTileFlagChanged();
+            _grpTileBase.Controls.Add(_cbTileHazardScale);
+
+            var lblStatus = new Label { Text = "Status:", Left = 10, Top = 194, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _grpTileBase.Controls.Add(lblStatus);
+
+            _txtTileHazardEffect = new TextBox { Left = 58, Top = 191, Width = 135, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _txtTileHazardEffect.TextChanged += (s, e) => OnTileFlagChanged();
+            _grpTileBase.Controls.Add(_txtTileHazardEffect);
+
+            _btnTileSaveHazardPreset = new Button { Text = "+ Preset", Left = 198, Top = 190, Width = 87, Height = 24, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold), Enabled = false };
+            _btnTileSaveHazardPreset.Click += (s, e) => SaveCurrentHazardAsPreset();
+            _grpTileBase.Controls.Add(_btnTileSaveHazardPreset);
+
+            _lblTileHazardSummary = new Label { Text = "Trigger: (No Hazard)", Left = 10, Top = 220, Width = 275, Height = 18, ForeColor = Color.DarkOrange, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold) };
+            _grpTileBase.Controls.Add(_lblTileHazardSummary);
+
+            _btnSpawnEntityHere = new Button { Text = "+ Spawn Entity / Creature Here", Left = 10, Top = 246, Width = 275, Height = 28, BackColor = Color.FromArgb(46, 139, 87), ForeColor = Color.White, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold), Visible = false };
             _btnSpawnEntityHere.Click += (s, e) => OnSpawnEntityClicked();
             _grpTileBase.Controls.Add(_btnSpawnEntityHere);
 
@@ -2296,8 +2347,7 @@ namespace GridLockedEditor
                 _chkTileIsOpen.Enabled = tile.CanBeOpened;
                 _chkTileIsOpen.Checked = tile.IsOpen;
                 _chkTileHazardous.Checked = tile.IsHazardous;
-                _nudTileHazardDamage.Enabled = tile.IsHazardous;
-                _nudTileHazardDamage.Value = Math.Max(0, Math.Min(999, tile.HazardDamage));
+                PopulateHazardControls(tile);
 
                 // 1. Entity / Creature Card
                 bool hasEntity = tile.CenterOccupant is MonsterInstance;
@@ -3103,6 +3153,143 @@ namespace GridLockedEditor
             _painter.Invalidate();
         }
 
+        private void PopulateHazardControls(DungeonTile tile)
+        {
+            if (_cbTileHazardType == null || _project == null) return;
+
+            // 1. Populate Damage Types dropdown
+            string curType = _cbTileHazardType.SelectedItem?.ToString();
+            _cbTileHazardType.Items.Clear();
+            foreach (var dt in _project.DamageTypes)
+                _cbTileHazardType.Items.Add(dt);
+
+            // 2. Populate Presets dropdown
+            _cbTileHazardPreset.Items.Clear();
+            _cbTileHazardPreset.Items.Add("(Custom Damage)");
+            foreach (var kvp in _project.DamageLibrary)
+            {
+                _cbTileHazardPreset.Items.Add($"{kvp.Value.Name} [{kvp.Value.Summary}]");
+            }
+
+            bool on = tile != null && tile.IsHazardous;
+            _cbTileHazardPreset.Enabled = on;
+            _cbTileHazardType.Enabled = on;
+            _nudTileHazardAmount.Enabled = on;
+            _cbTileHazardScale.Enabled = on;
+            _txtTileHazardEffect.Enabled = on;
+            _btnTileSaveHazardPreset.Enabled = on;
+
+            if (tile != null && tile.HazardEffect != null)
+            {
+                var eff = tile.HazardEffect;
+                // Try finding matching preset
+                int matchIdx = 0;
+                int idx = 1;
+                foreach (var kvp in _project.DamageLibrary)
+                {
+                    if (string.Equals(kvp.Value.Name, eff.Name, StringComparison.OrdinalIgnoreCase) ||
+                        (string.Equals(kvp.Value.Type, eff.Type, StringComparison.OrdinalIgnoreCase) && Math.Abs(kvp.Value.Amount - eff.Amount) < 0.01 && kvp.Value.ValueType == eff.ValueType))
+                    {
+                        matchIdx = idx;
+                        break;
+                    }
+                    idx++;
+                }
+                _cbTileHazardPreset.SelectedIndex = matchIdx;
+
+                if (_cbTileHazardType.Items.Contains(eff.Type))
+                    _cbTileHazardType.SelectedItem = eff.Type;
+                else if (_cbTileHazardType.Items.Count > 0)
+                    _cbTileHazardType.SelectedIndex = 0;
+
+                _nudTileHazardAmount.Value = Math.Max(0, Math.Min(9999, (decimal)eff.Amount));
+                _cbTileHazardScale.SelectedIndex = Math.Max(0, Math.Min(2, (int)eff.ValueType));
+                _txtTileHazardEffect.Text = eff.StatusEffect ?? "";
+                _lblTileHazardSummary.Text = "Trigger: " + eff.Summary;
+            }
+            else
+            {
+                _cbTileHazardPreset.SelectedIndex = 0;
+                if (_cbTileHazardType.Items.Count > 0) _cbTileHazardType.SelectedIndex = 0;
+                _nudTileHazardAmount.Value = 10;
+                _cbTileHazardScale.SelectedIndex = 0;
+                _txtTileHazardEffect.Text = "";
+                _lblTileHazardSummary.Text = on ? "Trigger: 10 Normal" : "Trigger: (No Hazard)";
+            }
+        }
+
+        private void OnHazardPresetSelected()
+        {
+            if (_isPopulatingInspector || _project == null || _cbTileHazardPreset.SelectedIndex <= 0) return;
+            string sel = _cbTileHazardPreset.SelectedItem?.ToString();
+            if (string.IsNullOrEmpty(sel)) return;
+
+            Damage preset = null;
+            foreach (var kvp in _project.DamageLibrary)
+            {
+                if (sel.StartsWith(kvp.Value.Name))
+                {
+                    preset = kvp.Value;
+                    break;
+                }
+            }
+            if (preset == null) return;
+
+            _isPopulatingInspector = true;
+            try
+            {
+                if (_cbTileHazardType.Items.Contains(preset.Type))
+                    _cbTileHazardType.SelectedItem = preset.Type;
+                _nudTileHazardAmount.Value = Math.Max(0, Math.Min(9999, (decimal)preset.Amount));
+                _cbTileHazardScale.SelectedIndex = Math.Max(0, Math.Min(2, (int)preset.ValueType));
+                _txtTileHazardEffect.Text = preset.StatusEffect ?? "";
+                _lblTileHazardSummary.Text = "Trigger: " + preset.Summary;
+            }
+            finally
+            {
+                _isPopulatingInspector = false;
+            }
+            OnTileFlagChanged();
+        }
+
+        private void SaveCurrentHazardAsPreset()
+        {
+            if (_project == null) return;
+            string defaultName = $"{_cbTileHazardType.SelectedItem ?? "Hazard"} Trigger";
+            using (var prompt = new Form())
+            {
+                prompt.Width = 350;
+                prompt.Height = 160;
+                prompt.Text = "Save Damage Preset";
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+                prompt.MaximizeBox = false;
+                prompt.MinimizeBox = false;
+
+                var lbl = new Label { Left = 15, Top = 15, Text = "Preset Name:", AutoSize = true };
+                var txt = new TextBox { Left = 15, Top = 35, Width = 300, Text = defaultName };
+                var btnOk = new Button { Text = "Save", Left = 155, Top = 75, Width = 75, DialogResult = DialogResult.OK };
+                var btnCancel = new Button { Text = "Cancel", Left = 240, Top = 75, Width = 75, DialogResult = DialogResult.Cancel };
+                prompt.Controls.AddRange(new Control[] { lbl, txt, btnOk, btnCancel });
+                prompt.AcceptButton = btnOk;
+                prompt.CancelButton = btnCancel;
+
+                if (prompt.ShowDialog(this) == DialogResult.OK && !string.IsNullOrWhiteSpace(txt.Text))
+                {
+                    string name = txt.Text.Trim();
+                    string id = name.ToLowerInvariant().Replace(' ', '_');
+                    var dmg = new Damage(name, _cbTileHazardType.SelectedItem?.ToString() ?? "Normal", (double)_nudTileHazardAmount.Value, (DamageValueType)Math.Max(0, _cbTileHazardScale.SelectedIndex), _txtTileHazardEffect.Text.Trim())
+                    {
+                        Id = id
+                    };
+                    _project.DamageLibrary[id] = dmg;
+                    PopulateHazardControls(_currentLevel?.Tiles[_painter.SelectedY, _painter.SelectedX]);
+                    PopulateDamageSettings();
+                    MessageBox.Show($"Preset '{name}' saved to Damage Library!", "Saved Preset", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
         private void OnTileFlagChanged()
         {
             if (_isPopulatingInspector || _currentLevel == null || _painter.SelectedX < 0 || _painter.SelectedY < 0) return;
@@ -3125,7 +3312,34 @@ namespace GridLockedEditor
                 tile.CanBeOpened = _chkTileCanBeOpened.Checked;
                 tile.IsOpen = _chkTileIsOpen.Checked;
                 tile.IsHazardous = _chkTileHazardous.Checked;
-                tile.HazardDamage = (int)_nudTileHazardDamage.Value;
+
+                if (tile.IsHazardous)
+                {
+                    string dmgType = _cbTileHazardType.SelectedItem?.ToString() ?? "Normal";
+                    double amt = (double)_nudTileHazardAmount.Value;
+                    DamageValueType vt = (DamageValueType)Math.Max(0, _cbTileHazardScale.SelectedIndex);
+                    string status = _txtTileHazardEffect.Text.Trim();
+
+                    if (tile.HazardEffect == null)
+                    {
+                        tile.HazardEffect = new Damage("Custom Hazard", dmgType, amt, vt, status);
+                    }
+                    else
+                    {
+                        tile.HazardEffect.Type = dmgType;
+                        tile.HazardEffect.Amount = amt;
+                        tile.HazardEffect.ValueType = vt;
+                        tile.HazardEffect.StatusEffect = status;
+                    }
+                    tile.HazardDamage = (int)Math.Round(tile.HazardEffect.Amount);
+                    _lblTileHazardSummary.Text = "Trigger: " + tile.HazardEffect.Summary;
+                }
+                else
+                {
+                    tile.HazardEffect = null;
+                    tile.HazardDamage = 0;
+                    _lblTileHazardSummary.Text = "Trigger: (No Hazard)";
+                }
             });
 
             _painter.Invalidate();
@@ -4765,6 +4979,294 @@ namespace GridLockedEditor
             var btnSaveLegend = new Button { Text = "Save key legend.json", Left = btnX, Top = btnY + 150, Width = 170, Height = 34, BackColor = Color.FromArgb(46, 139, 87), ForeColor = Color.White, Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Bold) };
             btnSaveLegend.Click += (s, e) => SaveKeyLegendJson();
             grpLegend.Controls.Add(btnSaveLegend);
+
+            // --- Section 3: Damage & Energy Types (project.json) ---
+            var grpDamageTypes = new GroupBox
+            {
+                Text = "Damage & Energy Types (project.json)",
+                Left = 20, Top = 670, Width = 380, Height = 340,
+                Font = new Font(FontFamily.GenericSansSerif, 9.5f, FontStyle.Bold),
+                ForeColor = Color.DarkSlateBlue
+            };
+            pnl.Controls.Add(grpDamageTypes);
+
+            var lblDtDesc = new Label
+            {
+                Text = "Custom damage & energy types available for hazards, weapons, and skills.",
+                Left = 15, Top = 25, AutoSize = true,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular),
+                ForeColor = Color.FromArgb(70, 70, 70)
+            };
+            grpDamageTypes.Controls.Add(lblDtDesc);
+
+            _lbDamageTypes = new ListBox
+            {
+                Left = 15, Top = 50, Width = 230, Height = 225,
+                Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Regular)
+            };
+            grpDamageTypes.Controls.Add(_lbDamageTypes);
+
+            _txtNewDamageType = new TextBox
+            {
+                Left = 15, Top = 290, Width = 145,
+                Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Regular)
+            };
+            grpDamageTypes.Controls.Add(_txtNewDamageType);
+
+            _btnAddDamageType = new Button
+            {
+                Text = "+ Add",
+                Left = 165, Top = 289, Width = 80, Height = 26,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold),
+                ForeColor = Color.Black
+            };
+            _btnAddDamageType.Click += (s, e) => AddDamageType();
+            grpDamageTypes.Controls.Add(_btnAddDamageType);
+
+            _btnRemoveDamageType = new Button
+            {
+                Text = "Remove Type",
+                Left = 255, Top = 50, Width = 110, Height = 28,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular),
+                ForeColor = Color.Black
+            };
+            _btnRemoveDamageType.Click += (s, e) => RemoveDamageType();
+            grpDamageTypes.Controls.Add(_btnRemoveDamageType);
+
+            var btnResetDt = new Button
+            {
+                Text = "Reset Defaults",
+                Left = 255, Top = 85, Width = 110, Height = 28,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular),
+                ForeColor = Color.Black
+            };
+            btnResetDt.Click += (s, e) => ResetDamageTypesToDefaults();
+            grpDamageTypes.Controls.Add(btnResetDt);
+
+            // --- Section 4: Hazard & Trap Damage Library (project.json) ---
+            var grpDamageLib = new GroupBox
+            {
+                Text = "Hazard & Trap Damage Library (project.json)",
+                Left = 415, Top = 670, Width = 565, Height = 340,
+                Font = new Font(FontFamily.GenericSansSerif, 9.5f, FontStyle.Bold),
+                ForeColor = Color.DarkSlateBlue
+            };
+            pnl.Controls.Add(grpDamageLib);
+
+            var lblDlDesc = new Label
+            {
+                Text = "Reusable Damage Objects linked to floor traps, lava, spikes, and hazard triggers.",
+                Left = 15, Top = 25, AutoSize = true,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular),
+                ForeColor = Color.FromArgb(70, 70, 70)
+            };
+            grpDamageLib.Controls.Add(lblDlDesc);
+
+            _dgvDamageLibrary = new DataGridView
+            {
+                Left = 15, Top = 50, Width = 415, Height = 270,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                ReadOnly = true,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                BackgroundColor = Color.White,
+                RowHeadersVisible = false,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular)
+            };
+            _dgvDamageLibrary.Columns.Add("Id", "ID");
+            _dgvDamageLibrary.Columns["Id"].Width = 85;
+            _dgvDamageLibrary.Columns.Add("Name", "Name");
+            _dgvDamageLibrary.Columns["Name"].Width = 115;
+            _dgvDamageLibrary.Columns.Add("Type", "Type");
+            _dgvDamageLibrary.Columns["Type"].Width = 75;
+            _dgvDamageLibrary.Columns.Add("Summary", "Summary");
+            _dgvDamageLibrary.Columns["Summary"].Width = 140;
+            _dgvDamageLibrary.CellDoubleClick += (s, e) => AddOrEditDamagePreset(isNew: false);
+            grpDamageLib.Controls.Add(_dgvDamageLibrary);
+
+            _btnAddDamagePreset = new Button
+            {
+                Text = "+ New Object...",
+                Left = 440, Top = 50, Width = 115, Height = 28,
+                BackColor = Color.FromArgb(0, 122, 204),
+                ForeColor = Color.White,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold)
+            };
+            _btnAddDamagePreset.Click += (s, e) => AddOrEditDamagePreset(isNew: true);
+            grpDamageLib.Controls.Add(_btnAddDamagePreset);
+
+            _btnEditDamagePreset = new Button
+            {
+                Text = "Edit Selected...",
+                Left = 440, Top = 85, Width = 115, Height = 28,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular),
+                ForeColor = Color.Black
+            };
+            _btnEditDamagePreset.Click += (s, e) => AddOrEditDamagePreset(isNew: false);
+            grpDamageLib.Controls.Add(_btnEditDamagePreset);
+
+            _btnRemoveDamagePreset = new Button
+            {
+                Text = "Delete Object",
+                Left = 440, Top = 120, Width = 115, Height = 28,
+                Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular),
+                ForeColor = Color.Black
+            };
+            _btnRemoveDamagePreset.Click += (s, e) => RemoveDamagePreset();
+            grpDamageLib.Controls.Add(_btnRemoveDamagePreset);
+        }
+
+        private void PopulateDamageSettings()
+        {
+            if (_project == null) return;
+
+            // Damage Types ListBox
+            if (_lbDamageTypes != null)
+            {
+                _lbDamageTypes.Items.Clear();
+                foreach (var dt in _project.DamageTypes)
+                    _lbDamageTypes.Items.Add(dt);
+            }
+
+            // Damage Library DataGrid
+            if (_dgvDamageLibrary != null)
+            {
+                _dgvDamageLibrary.Rows.Clear();
+                foreach (var kvp in _project.DamageLibrary)
+                {
+                    var d = kvp.Value;
+                    _dgvDamageLibrary.Rows.Add(d.Id, d.Name, d.Type, d.Summary);
+                }
+            }
+
+            // Sync with Tile Inspector if a tile is currently selected
+            if (_currentLevel != null && _painter.SelectedX >= 0 && _painter.SelectedY >= 0 &&
+                _painter.SelectedX < _currentLevel.Width && _painter.SelectedY < _currentLevel.Height)
+            {
+                var tile = _currentLevel.Tiles[_painter.SelectedY, _painter.SelectedX];
+                PopulateHazardControls(tile);
+            }
+        }
+
+        private void AddDamageType()
+        {
+            if (_project == null || _txtNewDamageType == null) return;
+            string t = _txtNewDamageType.Text.Trim();
+            if (string.IsNullOrWhiteSpace(t)) return;
+
+            if (!_project.DamageTypes.Contains(t, StringComparer.OrdinalIgnoreCase))
+            {
+                _project.DamageTypes.Add(t);
+                _txtNewDamageType.Clear();
+                PopulateDamageSettings();
+            }
+        }
+
+        private void RemoveDamageType()
+        {
+            if (_project == null || _lbDamageTypes == null || _lbDamageTypes.SelectedIndex < 0) return;
+            string t = _lbDamageTypes.SelectedItem.ToString();
+            _project.DamageTypes.Remove(t);
+            PopulateDamageSettings();
+        }
+
+        private void ResetDamageTypesToDefaults()
+        {
+            if (_project == null) return;
+            _project.DamageTypes.Clear();
+            _project.DamageTypes.AddRange(Damage.CreateDefaultDamageTypes());
+            PopulateDamageSettings();
+        }
+
+        private void AddOrEditDamagePreset(bool isNew = true)
+        {
+            if (_project == null) return;
+
+            Damage existing = null;
+            if (!isNew && _dgvDamageLibrary != null && _dgvDamageLibrary.CurrentRow != null)
+            {
+                string id = _dgvDamageLibrary.CurrentRow.Cells["Id"].Value?.ToString();
+                if (!string.IsNullOrEmpty(id) && _project.DamageLibrary.TryGetValue(id, out var found))
+                {
+                    existing = found;
+                }
+            }
+
+            using (var prompt = new Form())
+            {
+                prompt.Width = 420;
+                prompt.Height = 330;
+                prompt.Text = isNew ? "Create Damage Object" : $"Edit Damage Object ({existing?.Name})";
+                prompt.StartPosition = FormStartPosition.CenterParent;
+                prompt.FormBorderStyle = FormBorderStyle.FixedDialog;
+                prompt.MaximizeBox = false;
+                prompt.MinimizeBox = false;
+                prompt.Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Regular);
+
+                // Row 1: ID
+                var lblId = new Label { Left = 20, Top = 18, Text = "Object ID:", AutoSize = true };
+                var txtId = new TextBox { Left = 120, Top = 15, Width = 260, Text = existing?.Id ?? "", Enabled = isNew };
+
+                // Row 2: Name
+                var lblName = new Label { Left = 20, Top = 50, Text = "Display Name:", AutoSize = true };
+                var txtName = new TextBox { Left = 120, Top = 47, Width = 260, Text = existing?.Name ?? "" };
+
+                // Row 3: Damage Type
+                var lblType = new Label { Left = 20, Top = 82, Text = "Damage Type:", AutoSize = true };
+                var cbType = new ComboBox { Left = 120, Top = 79, Width = 260, DropDownStyle = ComboBoxStyle.DropDownList };
+                foreach (var dt in _project.DamageTypes)
+                    cbType.Items.Add(dt);
+                if (existing != null && cbType.Items.Contains(existing.Type))
+                    cbType.SelectedItem = existing.Type;
+                else if (cbType.Items.Count > 0)
+                    cbType.SelectedIndex = 0;
+
+                // Row 4: Amount & Mode
+                var lblAmt = new Label { Left = 20, Top = 114, Text = "Damage Value:", AutoSize = true };
+                var nudAmt = new NumericUpDown { Left = 120, Top = 111, Width = 80, Minimum = 0, Maximum = 9999, Value = Math.Max(0, Math.Min(9999, (decimal)(existing?.Amount ?? 15))) };
+
+                var cbMode = new ComboBox { Left = 210, Top = 111, Width = 170, DropDownStyle = ComboBoxStyle.DropDownList };
+                cbMode.Items.AddRange(new object[] { "Flat Amount", "% of Max HP", "% of Current HP" });
+                cbMode.SelectedIndex = existing != null ? (int)existing.ValueType : 0;
+
+                // Row 5: Status Effect
+                var lblStatus = new Label { Left = 20, Top = 146, Text = "Status Effect:", AutoSize = true };
+                var txtStatus = new TextBox { Left = 120, Top = 143, Width = 260, Text = existing?.StatusEffect ?? "" };
+
+                // Buttons
+                var btnOk = new Button { Text = isNew ? "Create" : "Update", Left = 215, Top = 230, Width = 80, Height = 28, DialogResult = DialogResult.OK, BackColor = Color.FromArgb(0, 122, 204), ForeColor = Color.White, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold) };
+                var btnCancel = new Button { Text = "Cancel", Left = 300, Top = 230, Width = 80, Height = 28, DialogResult = DialogResult.Cancel };
+                prompt.Controls.AddRange(new Control[] { lblId, txtId, lblName, txtName, lblType, cbType, lblAmt, nudAmt, cbMode, lblStatus, txtStatus, btnOk, btnCancel });
+                prompt.AcceptButton = btnOk;
+                prompt.CancelButton = btnCancel;
+
+                if (prompt.ShowDialog(this) == DialogResult.OK)
+                {
+                    string name = txtName.Text.Trim();
+                    if (string.IsNullOrEmpty(name)) name = "Damage Object";
+                    string id = txtId.Text.Trim();
+                    if (string.IsNullOrEmpty(id)) id = name.ToLowerInvariant().Replace(' ', '_');
+
+                    var d = new Damage(name, cbType.SelectedItem?.ToString() ?? "Normal", (double)nudAmt.Value, (DamageValueType)Math.Max(0, cbMode.SelectedIndex), txtStatus.Text.Trim())
+                    {
+                        Id = id
+                    };
+                    _project.DamageLibrary[id] = d;
+                    PopulateDamageSettings();
+                }
+            }
+        }
+
+        private void RemoveDamagePreset()
+        {
+            if (_project == null || _dgvDamageLibrary == null || _dgvDamageLibrary.CurrentRow == null) return;
+            string id = _dgvDamageLibrary.CurrentRow.Cells["Id"].Value?.ToString();
+            if (!string.IsNullOrEmpty(id))
+            {
+                _project.DamageLibrary.Remove(id);
+                PopulateDamageSettings();
+            }
         }
 
         private void PopulateProjectSettings()
@@ -4801,6 +5303,7 @@ namespace GridLockedEditor
             }
 
             PopulateLegendGrid();
+            PopulateDamageSettings();
         }
 
         private void SaveProjectSettingsJson(bool showPrompt = true)
@@ -4821,7 +5324,22 @@ namespace GridLockedEditor
             sb.AppendLine("{");
             sb.AppendLine($"  \"title\": \"{_project.Title.Replace("\"", "\\\"")}\",");
             sb.AppendLine($"  \"startDungeon\": \"{_project.StartDungeonId}\",");
-            sb.AppendLine($"  \"startLevel\": {_project.StartLevelNumber}");
+            sb.AppendLine($"  \"startLevel\": {_project.StartLevelNumber},");
+            sb.AppendLine("  \"damageTypes\": [");
+            for (int i = 0; i < _project.DamageTypes.Count; i++)
+            {
+                sb.Append($"    \"{_project.DamageTypes[i]}\"");
+                if (i < _project.DamageTypes.Count - 1) sb.Append(",");
+                sb.AppendLine();
+            }
+            sb.AppendLine("  ],");
+            sb.AppendLine("  \"damageLibrary\": {");
+            int dIdx = 0;
+            foreach (var kvp in _project.DamageLibrary)
+            {
+                sb.AppendLine($"    \"{kvp.Key}\": {kvp.Value.ToJsonString(4).TrimStart()}" + (dIdx++ < _project.DamageLibrary.Count - 1 ? "," : ""));
+            }
+            sb.AppendLine("  }");
             sb.AppendLine("}");
             File.WriteAllText(projJsonPath, sb.ToString());
 
@@ -4845,7 +5363,7 @@ namespace GridLockedEditor
                 string breakable = a.IsBreakable ? $"Yes ({a.BreakHP} HP)" : "No";
                 string moveable = a.IsMoveable ? "Yes (Push)" : "No";
                 string openable = a.CanBeOpened ? (a.StartsOpen ? "Open" : "Closed") : "No";
-                string hazard = a.IsHazardous ? $"Yes ({a.HazardDamage})" : "No";
+                string hazard = a.IsHazardous ? $"Yes ({a.HazardEffect?.Summary ?? a.HazardDamage.ToString()})" : "No";
                 string prop = string.IsNullOrEmpty(a.ObjectKind) ? "-" : a.ObjectKind;
 
                 _dgvLegend.Rows.Add(
@@ -4938,15 +5456,23 @@ namespace GridLockedEditor
                 chkOpen.CheckedChanged += (s, e) => chkStartsOpen.Enabled = chkOpen.Checked;
                 grpPhysics.Controls.Add(chkStartsOpen);
 
-                var chkHazard = new CheckBox { Text = "Hazardous (Damages on step)", Left = 15, Top = 160, AutoSize = true, Checked = existingArch?.IsHazardous ?? false, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
+                var chkHazard = new CheckBox { Text = "Hazardous:", Left = 15, Top = 160, AutoSize = true, Checked = existingArch?.IsHazardous ?? false, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
                 grpPhysics.Controls.Add(chkHazard);
 
-                var lblDmg = new Label { Text = "Dmg:", Left = 210, Top = 161, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
-                grpPhysics.Controls.Add(lblDmg);
-
-                var nudDmg = new NumericUpDown { Left = 250, Top = 158, Width = 60, Minimum = 0, Maximum = 999, Value = Math.Max(0, Math.Min(999, existingArch?.HazardDamage ?? 0)), Enabled = chkHazard.Checked, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
-                chkHazard.CheckedChanged += (s, e) => nudDmg.Enabled = chkHazard.Checked;
-                grpPhysics.Controls.Add(nudDmg);
+                var cbHazPreset = new ComboBox { Left = 100, Top = 158, Width = 285, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular), Enabled = chkHazard.Checked };
+                cbHazPreset.Items.Add("(Custom 10 Normal)");
+                int hazSelIdx = 0;
+                int hIdx = 1;
+                foreach (var kvp in _project.DamageLibrary)
+                {
+                    cbHazPreset.Items.Add($"{kvp.Value.Name} [{kvp.Value.Summary}]");
+                    if (existingArch?.HazardEffect != null && (string.Equals(kvp.Value.Name, existingArch.HazardEffect.Name, StringComparison.OrdinalIgnoreCase) || string.Equals(kvp.Key, existingArch.HazardEffect.Id, StringComparison.OrdinalIgnoreCase)))
+                        hazSelIdx = hIdx;
+                    hIdx++;
+                }
+                cbHazPreset.SelectedIndex = hazSelIdx;
+                chkHazard.CheckedChanged += (s, e) => cbHazPreset.Enabled = chkHazard.Checked;
+                grpPhysics.Controls.Add(cbHazPreset);
 
                 cbBaseType.SelectedIndexChanged += (s, e) =>
                 {
@@ -4961,7 +5487,6 @@ namespace GridLockedEditor
                         chkOpen.Checked = temp.CanBeOpened;
                         chkStartsOpen.Checked = temp.StartsOpen;
                         chkHazard.Checked = temp.IsHazardous;
-                        nudDmg.Value = Math.Max(0, Math.Min(999, temp.HazardDamage));
                         if (string.IsNullOrEmpty(txtId.Text)) txtId.Text = selTt.ToString().ToLowerInvariant();
                         if (string.IsNullOrEmpty(txtName.Text)) txtName.Text = selTt.ToString();
                     }
@@ -5011,6 +5536,27 @@ namespace GridLockedEditor
                     string propKind = cbProp.Text.Trim();
                     if (propKind == "(None)") propKind = "";
 
+                    Damage selectedHazDmg = null;
+                    if (chkHazard.Checked)
+                    {
+                        if (cbHazPreset.SelectedIndex > 0)
+                        {
+                            string selText = cbHazPreset.SelectedItem?.ToString() ?? "";
+                            foreach (var kvp in _project.DamageLibrary)
+                            {
+                                if (selText.StartsWith(kvp.Value.Name))
+                                {
+                                    selectedHazDmg = kvp.Value.Clone();
+                                    break;
+                                }
+                            }
+                        }
+                        if (selectedHazDmg == null)
+                        {
+                            selectedHazDmg = existingArch?.HazardEffect?.Clone() ?? new Damage("Hazard", "Normal", 10);
+                        }
+                    }
+
                     var arch = new TileArchetype
                     {
                         Key = key,
@@ -5026,7 +5572,8 @@ namespace GridLockedEditor
                         CanBeOpened = chkOpen.Checked,
                         StartsOpen = chkStartsOpen.Checked,
                         IsHazardous = chkHazard.Checked,
-                        HazardDamage = (int)nudDmg.Value,
+                        HazardEffect = selectedHazDmg,
+                        HazardDamage = selectedHazDmg != null ? (int)Math.Round(selectedHazDmg.Amount) : 0,
                         ObjectKind = propKind
                     };
 

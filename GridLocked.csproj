@@ -52,6 +52,7 @@
     <Compile Include="DirectBitmap.cs" />
     <Compile Include="VectorSprite.cs" />
     <Compile Include="CenterEntity.cs" />
+    <Compile Include="Damage.cs" />
     <Compile Include="TileArchetype.cs" />
     <Compile Include="TransitionObject.cs" />
     <Compile Include="DungeonTile.cs" />

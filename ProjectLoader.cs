@@ -190,6 +190,9 @@ namespace GridLocked
                         string baseTypeStr = obj.GetString("baseType", "Floor");
                         Enum.TryParse<TileType>(baseTypeStr, true, out var bType);
 
+                        var dmgNode = obj.Get("hazardDamage") ?? obj.Get("hazardEffect");
+                        Damage hazardDmg = Damage.FromJson(dmgNode);
+
                         var arch = new TileArchetype(c, id, name, bType)
                         {
                             CanWalkThru = obj.GetBool("canWalkThru", bType == TileType.Floor || bType == TileType.Spawn),
@@ -201,7 +204,8 @@ namespace GridLocked
                             CanBeOpened = obj.GetBool("canBeOpened", bType == TileType.Door),
                             StartsOpen = obj.GetBool("startsOpen", false),
                             IsHazardous = obj.GetBool("hazardous", bType == TileType.VoidOrPit),
-                            HazardDamage = obj.GetInt("hazardDamage", 0),
+                            HazardEffect = hazardDmg,
+                            HazardDamage = hazardDmg != null ? (int)Math.Round(hazardDmg.Amount) : obj.GetInt("hazardDamage", 0),
                             ObjectKind = obj.GetString("objectKind", obj.GetString("sprite", string.Empty)),
                             Description = obj.GetString("description", string.Empty)
                         };
@@ -249,7 +253,14 @@ namespace GridLocked
                 sb.AppendLine($"    \"canBeOpened\": {(a.CanBeOpened ? "true" : "false")},");
                 sb.AppendLine($"    \"startsOpen\": {(a.StartsOpen ? "true" : "false")},");
                 sb.AppendLine($"    \"hazardous\": {(a.IsHazardous ? "true" : "false")},");
-                sb.AppendLine($"    \"hazardDamage\": {a.HazardDamage},");
+                if (a.HazardEffect != null)
+                {
+                    sb.AppendLine($"    \"hazardDamage\": {a.HazardEffect.ToJsonString(4).TrimStart()},");
+                }
+                else
+                {
+                    sb.AppendLine($"    \"hazardDamage\": {a.HazardDamage},");
+                }
                 sb.AppendLine($"    \"objectKind\": \"{a.ObjectKind}\"");
                 sb.Append("  }");
                 if (++i < _archetypes.Count) sb.Append(",");
@@ -280,6 +291,62 @@ namespace GridLocked
         public VectorSpriteRegistry Objects { get; } = new VectorSpriteRegistry();
         public EntityRegistry Entities { get; } = new EntityRegistry();
         public LootTableRegistry LootTables { get; } = new LootTableRegistry();
+
+        public List<string> DamageTypes { get; } = new List<string>();
+        public Dictionary<string, Damage> DamageLibrary { get; } = new Dictionary<string, Damage>(StringComparer.OrdinalIgnoreCase);
+
+        public void EnsureDefaultDamageTypes()
+        {
+            if (DamageTypes.Count == 0)
+                DamageTypes.AddRange(Damage.CreateDefaultDamageTypes());
+            if (DamageLibrary.Count == 0)
+            {
+                foreach (var p in Damage.CreateDefaultPresets())
+                    DamageLibrary[p.Id] = p;
+            }
+        }
+
+        public void ParseDamageConfig(JsonNode json)
+        {
+            if (json == null) return;
+            var dtNode = json.Get("damageTypes");
+            if (dtNode != null && dtNode.ArrayValue != null)
+            {
+                DamageTypes.Clear();
+                foreach (var item in dtNode.ArrayValue)
+                {
+                    string t = item.AsString();
+                    if (!string.IsNullOrWhiteSpace(t) && !DamageTypes.Contains(t))
+                        DamageTypes.Add(t);
+                }
+            }
+
+            var dlNode = json.Get("damageLibrary") ?? json.Get("damages") ?? json.Get("hazards");
+            if (dlNode != null)
+            {
+                if (dlNode.ObjectValue != null)
+                {
+                    foreach (var kvp in dlNode.ObjectValue)
+                    {
+                        var d = Damage.FromJson(kvp.Value);
+                        if (d != null)
+                        {
+                            if (string.IsNullOrEmpty(d.Id)) d.Id = kvp.Key;
+                            DamageLibrary[d.Id] = d;
+                        }
+                    }
+                }
+                else if (dlNode.ArrayValue != null)
+                {
+                    foreach (var item in dlNode.ArrayValue)
+                    {
+                        var d = Damage.FromJson(item);
+                        if (d != null && !string.IsNullOrEmpty(d.Id))
+                            DamageLibrary[d.Id] = d;
+                    }
+                }
+            }
+        }
 
         public Dictionary<string, DungeonPackage> Dungeons { get; } =
             new Dictionary<string, DungeonPackage>(StringComparer.OrdinalIgnoreCase);
@@ -334,8 +401,18 @@ namespace GridLocked
                     project.StartDungeonId = json.GetString("startDungeon", project.StartDungeonId);
                     project.StartLevelNumber = json.GetInt("startLevel", project.StartLevelNumber);
                     project.Legend.ParseJson(json.Get("legend"));
+                    project.ParseDamageConfig(json);
                 }
             }
+
+            // 2.5 damage_types.json in GLP
+            string dtGlpText = GetText("damage_types.json");
+            if (dtGlpText != null)
+            {
+                var dtJson = JsonLite.Parse(dtGlpText);
+                if (dtJson != null) project.ParseDamageConfig(dtJson);
+            }
+            project.EnsureDefaultDamageTypes();
 
             // 3. item_classes.json
             string classesText = GetText("item_classes.json");
@@ -436,8 +513,18 @@ namespace GridLocked
                     project.StartDungeonId = json.GetString("startDungeon", project.StartDungeonId);
                     project.StartLevelNumber = json.GetInt("startLevel", project.StartLevelNumber);
                     project.Legend.ParseJson(json.Get("legend"));
+                    project.ParseDamageConfig(json);
                 }
             }
+
+            // 2.5 damage_types.json in directory
+            string dtDirPath = Path.Combine(projectDir, "damage_types.json");
+            if (File.Exists(dtDirPath))
+            {
+                var dtJson = JsonLite.Parse(File.ReadAllText(dtDirPath));
+                if (dtJson != null) project.ParseDamageConfig(dtJson);
+            }
+            project.EnsureDefaultDamageTypes();
 
             // 2. Load item_classes.json if present
             string classesJsonPath = Path.Combine(projectDir, "item_classes.json");
