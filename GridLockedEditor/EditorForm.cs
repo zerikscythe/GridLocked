@@ -54,11 +54,14 @@ namespace GridLockedEditor
         private CheckBox _chkTileCanWalkThru;
         private CheckBox _chkTileBlocksVision;
         private CheckBox _chkTileBreakable;
+        private Label _lblBHP;
         private NumericUpDown _nudTileBreakHP;
         private CheckBox _chkTileMoveable;
         private CheckBox _chkTileCanBeOpened;
         private CheckBox _chkTileIsOpen;
         private CheckBox _chkTileHazardous;
+        private Panel _pnlTileHazard;
+        private Panel _pnlTileHazardCustom;
         private ComboBox _cbTileHazardPreset;
         private ComboBox _cbTileHazardType;
         private NumericUpDown _nudTileHazardAmount;
@@ -87,10 +90,13 @@ namespace GridLockedEditor
         private NumericUpDown _nudEntityLevel;
         private Label _lblEntityStatsPreview;
         private CheckBox _chkEntityUnique;
+        private Label _lblEntityTitle;
         private TextBox _txtEntityTitle;
         private CheckBox _chkEntityArchetypeLoot;
         private CheckBox _chkEntityZoneLoot;
+        private Label _lblCustomLoot;
         private ComboBox _cbEntityCustomLoot;
+        private Label _lblGuaranteedDrop;
         private ComboBox _cbGuaranteedItem;
         private Button _btnAddGuaranteedDrop;
         private ListBox _lbGuaranteedDrops;
@@ -159,6 +165,7 @@ namespace GridLockedEditor
         private CheckBox _chkTransLocked;
         private ComboBox _cbTransKey;
         private CheckBox _chkTransTrapped;
+        private Panel _pnlTransTrap;
         private ComboBox _cbTransTrapType;
         private NumericUpDown _nudTransTrapDamage;
         private CheckBox _chkTransRecurring;
@@ -565,13 +572,13 @@ namespace GridLockedEditor
             _grpTileBase.Controls.Add(_chkTileBlocksVision);
 
             _chkTileBreakable = new CheckBox { Text = "Breakable", Left = 10, Top = 92, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _chkTileBreakable.CheckedChanged += (s, e) => { _nudTileBreakHP.Enabled = _chkTileBreakable.Checked; OnTileFlagChanged(); };
+            _chkTileBreakable.CheckedChanged += (s, e) => { UpdateTileInspectorVisibility(); OnTileFlagChanged(); };
             _grpTileBase.Controls.Add(_chkTileBreakable);
 
-            var lblBHP = new Label { Text = "HP:", Left = 86, Top = 93, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _grpTileBase.Controls.Add(lblBHP);
+            _lblBHP = new Label { Text = "HP:", Left = 86, Top = 93, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Visible = false };
+            _grpTileBase.Controls.Add(_lblBHP);
 
-            _nudTileBreakHP = new NumericUpDown { Left = 108, Top = 90, Width = 45, Minimum = 1, Maximum = 1000, Value = 50, Enabled = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _nudTileBreakHP = new NumericUpDown { Left = 108, Top = 90, Width = 45, Minimum = 1, Maximum = 1000, Value = 50, Enabled = true, Visible = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
             _nudTileBreakHP.ValueChanged += (s, e) => OnTileFlagChanged();
             _grpTileBase.Controls.Add(_nudTileBreakHP);
 
@@ -580,60 +587,57 @@ namespace GridLockedEditor
             _grpTileBase.Controls.Add(_chkTileMoveable);
 
             _chkTileCanBeOpened = new CheckBox { Text = "Can Be Opened", Left = 10, Top = 116, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _chkTileCanBeOpened.CheckedChanged += (s, e) => { _chkTileIsOpen.Enabled = _chkTileCanBeOpened.Checked; OnTileFlagChanged(); };
+            _chkTileCanBeOpened.CheckedChanged += (s, e) => { UpdateTileInspectorVisibility(); OnTileFlagChanged(); };
             _grpTileBase.Controls.Add(_chkTileCanBeOpened);
 
-            _chkTileIsOpen = new CheckBox { Text = "Is Open", Left = 115, Top = 116, AutoSize = true, Enabled = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _chkTileIsOpen = new CheckBox { Text = "Is Open", Left = 115, Top = 116, AutoSize = true, Enabled = true, Visible = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
             _chkTileIsOpen.CheckedChanged += (s, e) => OnTileFlagChanged();
             _grpTileBase.Controls.Add(_chkTileIsOpen);
 
             _chkTileHazardous = new CheckBox { Text = "Hazardous", Left = 10, Top = 140, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _chkTileHazardous.CheckedChanged += (s, e) =>
-            {
-                bool on = _chkTileHazardous.Checked;
-                _cbTileHazardPreset.Enabled = on;
-                _cbTileHazardType.Enabled = on;
-                _nudTileHazardAmount.Enabled = on;
-                _cbTileHazardScale.Enabled = on;
-                _txtTileHazardEffect.Enabled = on;
-                _btnTileSaveHazardPreset.Enabled = on;
-                OnTileFlagChanged();
-            };
+            _chkTileHazardous.CheckedChanged += (s, e) => { UpdateTileInspectorVisibility(); OnTileFlagChanged(); };
             _grpTileBase.Controls.Add(_chkTileHazardous);
 
-            _cbTileHazardPreset = new ComboBox { Left = 95, Top = 138, Width = 190, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
-            _cbTileHazardPreset.SelectedIndexChanged += (s, e) => OnHazardPresetSelected();
-            _grpTileBase.Controls.Add(_cbTileHazardPreset);
+            // Container panel for all Hazard controls - completely hidden when Hazardous is OFF
+            _pnlTileHazard = new Panel { Left = 10, Top = 162, Width = 275, Height = 60, Visible = false };
+            _grpTileBase.Controls.Add(_pnlTileHazard);
 
-            _cbTileHazardType = new ComboBox { Left = 10, Top = 164, Width = 85, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _cbTileHazardPreset = new ComboBox { Left = 0, Top = 0, Width = 275, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _cbTileHazardPreset.SelectedIndexChanged += (s, e) => { OnHazardPresetSelected(); UpdateTileInspectorVisibility(); };
+            _pnlTileHazard.Controls.Add(_cbTileHazardPreset);
+
+            _pnlTileHazardCustom = new Panel { Left = 0, Top = 26, Width = 275, Height = 58, Visible = false };
+            _pnlTileHazard.Controls.Add(_pnlTileHazardCustom);
+
+            _cbTileHazardType = new ComboBox { Left = 0, Top = 2, Width = 85, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
             _cbTileHazardType.SelectedIndexChanged += (s, e) => OnTileFlagChanged();
-            _grpTileBase.Controls.Add(_cbTileHazardType);
+            _pnlTileHazardCustom.Controls.Add(_cbTileHazardType);
 
-            _nudTileHazardAmount = new NumericUpDown { Left = 100, Top = 164, Width = 55, Minimum = 0, Maximum = 9999, Value = 10, Enabled = false, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _nudTileHazardAmount = new NumericUpDown { Left = 90, Top = 2, Width = 55, Minimum = 0, Maximum = 9999, Value = 10, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
             _nudTileHazardAmount.ValueChanged += (s, e) => OnTileFlagChanged();
-            _grpTileBase.Controls.Add(_nudTileHazardAmount);
+            _pnlTileHazardCustom.Controls.Add(_nudTileHazardAmount);
 
-            _cbTileHazardScale = new ComboBox { Left = 160, Top = 164, Width = 125, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _cbTileHazardScale = new ComboBox { Left = 150, Top = 2, Width = 125, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
             _cbTileHazardScale.Items.AddRange(new object[] { "Flat Amount", "% of Max HP", "% of Current HP" });
             _cbTileHazardScale.SelectedIndex = 0;
             _cbTileHazardScale.SelectedIndexChanged += (s, e) => OnTileFlagChanged();
-            _grpTileBase.Controls.Add(_cbTileHazardScale);
+            _pnlTileHazardCustom.Controls.Add(_cbTileHazardScale);
 
-            var lblStatus = new Label { Text = "Status:", Left = 10, Top = 194, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _grpTileBase.Controls.Add(lblStatus);
+            var lblStatus = new Label { Text = "Status:", Left = 0, Top = 32, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _pnlTileHazardCustom.Controls.Add(lblStatus);
 
-            _txtTileHazardEffect = new TextBox { Left = 58, Top = 191, Width = 135, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular), Enabled = false };
+            _txtTileHazardEffect = new TextBox { Left = 46, Top = 29, Width = 135, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
             _txtTileHazardEffect.TextChanged += (s, e) => OnTileFlagChanged();
-            _grpTileBase.Controls.Add(_txtTileHazardEffect);
+            _pnlTileHazardCustom.Controls.Add(_txtTileHazardEffect);
 
-            _btnTileSaveHazardPreset = new Button { Text = "+ Preset", Left = 198, Top = 190, Width = 87, Height = 24, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold), Enabled = false };
+            _btnTileSaveHazardPreset = new Button { Text = "+ Preset", Left = 188, Top = 28, Width = 87, Height = 24, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold) };
             _btnTileSaveHazardPreset.Click += (s, e) => SaveCurrentHazardAsPreset();
-            _grpTileBase.Controls.Add(_btnTileSaveHazardPreset);
+            _pnlTileHazardCustom.Controls.Add(_btnTileSaveHazardPreset);
 
-            _lblTileHazardSummary = new Label { Text = "Trigger: (No Hazard)", Left = 10, Top = 220, Width = 275, Height = 18, ForeColor = Color.DarkOrange, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold) };
-            _grpTileBase.Controls.Add(_lblTileHazardSummary);
+            _lblTileHazardSummary = new Label { Text = "Trigger: (No Hazard)", Left = 0, Top = 26, Width = 275, Height = 18, ForeColor = Color.DarkOrange, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold) };
+            _pnlTileHazard.Controls.Add(_lblTileHazardSummary);
 
-            _btnSpawnEntityHere = new Button { Text = "+ Spawn Entity / Creature Here", Left = 10, Top = 246, Width = 275, Height = 28, BackColor = Color.FromArgb(46, 139, 87), ForeColor = Color.White, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold), Visible = false };
+            _btnSpawnEntityHere = new Button { Text = "+ Spawn Entity / Creature Here", Left = 10, Top = 168, Width = 275, Height = 28, BackColor = Color.FromArgb(46, 139, 87), ForeColor = Color.White, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold), Visible = false };
             _btnSpawnEntityHere.Click += (s, e) => OnSpawnEntityClicked();
             _grpTileBase.Controls.Add(_btnSpawnEntityHere);
 
@@ -669,13 +673,17 @@ namespace GridLockedEditor
             _grpEntityCard.Controls.Add(_lblEntityStatsPreview);
 
             _chkEntityUnique = new CheckBox { Text = "★ Unique / Boss Creature", Left = 10, Top = 118, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Bold) };
-            _chkEntityUnique.CheckedChanged += (s, e) => OnEntityPropertyChanged();
+            _chkEntityUnique.CheckedChanged += (s, e) =>
+            {
+                UpdateEntityCardLayout();
+                OnEntityPropertyChanged();
+            };
             _grpEntityCard.Controls.Add(_chkEntityUnique);
 
-            var lblETitle = new Label { Text = "Boss Title:", Left = 10, Top = 142, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
-            _grpEntityCard.Controls.Add(lblETitle);
+            _lblEntityTitle = new Label { Text = "Boss Title:", Left = 10, Top = 142, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular), Visible = false };
+            _grpEntityCard.Controls.Add(_lblEntityTitle);
 
-            _txtEntityTitle = new TextBox { Left = 80, Top = 139, Width = 205, Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Regular), Enabled = false };
+            _txtEntityTitle = new TextBox { Left = 80, Top = 139, Width = 205, Font = new Font(FontFamily.GenericSansSerif, 8.5f, FontStyle.Regular), Visible = false };
             _txtEntityTitle.TextChanged += (s, e) => OnEntityPropertyChanged();
             _grpEntityCard.Controls.Add(_txtEntityTitle);
 
@@ -687,15 +695,15 @@ namespace GridLockedEditor
             _chkEntityZoneLoot.CheckedChanged += (s, e) => OnEntityPropertyChanged();
             _grpEntityCard.Controls.Add(_chkEntityZoneLoot);
 
-            var lblCLoot = new Label { Text = "Custom Loot:", Left = 10, Top = 211, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
-            _grpEntityCard.Controls.Add(lblCLoot);
+            _lblCustomLoot = new Label { Text = "Custom Loot:", Left = 10, Top = 211, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Regular) };
+            _grpEntityCard.Controls.Add(_lblCustomLoot);
 
             _cbEntityCustomLoot = new ComboBox { Left = 85, Top = 208, Width = 200, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
             _cbEntityCustomLoot.SelectedIndexChanged += (s, e) => OnEntityPropertyChanged();
             _grpEntityCard.Controls.Add(_cbEntityCustomLoot);
 
-            var lblGDrop = new Label { Text = "Guaranteed Drops (100% on defeat):", Left = 10, Top = 236, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold), ForeColor = Color.FromArgb(40, 100, 40) };
-            _grpEntityCard.Controls.Add(lblGDrop);
+            _lblGuaranteedDrop = new Label { Text = "Guaranteed Drops (100% on defeat):", Left = 10, Top = 236, AutoSize = true, Font = new Font(FontFamily.GenericSansSerif, 7.5f, FontStyle.Bold), ForeColor = Color.FromArgb(40, 100, 40) };
+            _grpEntityCard.Controls.Add(_lblGuaranteedDrop);
 
             _cbGuaranteedItem = new ComboBox { Left = 10, Top = 254, Width = 185, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font(FontFamily.GenericSansSerif, 8f, FontStyle.Regular) };
             _grpEntityCard.Controls.Add(_cbGuaranteedItem);
@@ -826,12 +834,12 @@ namespace GridLockedEditor
             _chkTransLocked = new CheckBox { Text = "Is Locked (Requires Key)", Left = 10, Top = 112, AutoSize = true, Font = new Font("Segoe UI", 8f, FontStyle.Bold) };
             _chkTransLocked.CheckedChanged += (s, e) =>
             {
-                _cbTransKey.Enabled = _chkTransLocked.Checked;
+                UpdateTransitionCardLayout();
                 OnTransitionPropertyChanged();
             };
             _grpTransition.Controls.Add(_chkTransLocked);
 
-            _cbTransKey = new ComboBox { Left = 10, Top = 134, Width = 267, DropDownStyle = ComboBoxStyle.DropDown, Font = new Font("Segoe UI", 8f), Enabled = false };
+            _cbTransKey = new ComboBox { Left = 10, Top = 134, Width = 267, DropDownStyle = ComboBoxStyle.DropDown, Font = new Font("Segoe UI", 8f), Visible = false };
             _cbTransKey.TextChanged += (s, e) => OnTransitionPropertyChanged();
             _grpTransition.Controls.Add(_cbTransKey);
 
@@ -839,40 +847,38 @@ namespace GridLockedEditor
             _chkTransTrapped = new CheckBox { Text = "Is Trapped", Left = 10, Top = 162, AutoSize = true, Font = new Font("Segoe UI", 8f, FontStyle.Bold) };
             _chkTransTrapped.CheckedChanged += (s, e) =>
             {
-                bool en = _chkTransTrapped.Checked;
-                _cbTransTrapType.Enabled = en;
-                _nudTransTrapDamage.Enabled = en;
-                _chkTransRecurring.Enabled = en;
-                _nudTransJiggleChance.Enabled = en;
-                _nudTransOpenChance.Enabled = en;
+                UpdateTransitionCardLayout();
                 OnTransitionPropertyChanged();
             };
             _grpTransition.Controls.Add(_chkTransTrapped);
 
-            _cbTransTrapType = new ComboBox { Left = 10, Top = 184, Width = 165, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8f), Enabled = false };
+            _pnlTransTrap = new Panel { Left = 10, Top = 184, Width = 275, Height = 72, Visible = false };
+            _grpTransition.Controls.Add(_pnlTransTrap);
+
+            _cbTransTrapType = new ComboBox { Left = 0, Top = 0, Width = 165, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 8f) };
             _cbTransTrapType.Items.AddRange(new object[] { "PoisonDart", "Spike", "ElectricShock", "ArcaneWard", "FlameJet", "Gas", "Alarm", "Pitfall" });
             _cbTransTrapType.SelectedIndex = 0;
             _cbTransTrapType.SelectedIndexChanged += (s, e) => OnTransitionPropertyChanged();
-            _grpTransition.Controls.Add(_cbTransTrapType);
+            _pnlTransTrap.Controls.Add(_cbTransTrapType);
 
-            _nudTransTrapDamage = new NumericUpDown { Left = 182, Top = 184, Width = 95, Minimum = 0, Maximum = 500, Value = 10, Font = new Font("Segoe UI", 8f), Enabled = false };
+            _nudTransTrapDamage = new NumericUpDown { Left = 172, Top = 0, Width = 95, Minimum = 0, Maximum = 500, Value = 10, Font = new Font("Segoe UI", 8f) };
             _nudTransTrapDamage.ValueChanged += (s, e) => OnTransitionPropertyChanged();
-            _grpTransition.Controls.Add(_nudTransTrapDamage);
+            _pnlTransTrap.Controls.Add(_nudTransTrapDamage);
 
-            _chkTransRecurring = new CheckBox { Text = "Recurring (Magic / Shock Ward)", Left = 10, Top = 210, AutoSize = true, Font = new Font("Segoe UI", 7.5f), Enabled = false };
+            _chkTransRecurring = new CheckBox { Text = "Recurring (Magic / Shock Ward)", Left = 0, Top = 26, AutoSize = true, Font = new Font("Segoe UI", 7.5f) };
             _chkTransRecurring.CheckedChanged += (s, e) => OnTransitionPropertyChanged();
-            _grpTransition.Controls.Add(_chkTransRecurring);
+            _pnlTransTrap.Controls.Add(_chkTransRecurring);
 
-            var lblChances = new Label { Text = "Jiggle / Open %:", Left = 10, Top = 232, AutoSize = true, Font = new Font("Segoe UI", 7.5f) };
-            _grpTransition.Controls.Add(lblChances);
+            var lblChances = new Label { Text = "Jiggle / Open %:", Left = 0, Top = 48, AutoSize = true, Font = new Font("Segoe UI", 7.5f) };
+            _pnlTransTrap.Controls.Add(lblChances);
 
-            _nudTransJiggleChance = new NumericUpDown { Left = 110, Top = 230, Width = 70, Minimum = 0, Maximum = 100, Value = 33, Font = new Font("Segoe UI", 7.5f), Enabled = false };
+            _nudTransJiggleChance = new NumericUpDown { Left = 100, Top = 46, Width = 70, Minimum = 0, Maximum = 100, Value = 33, Font = new Font("Segoe UI", 7.5f) };
             _nudTransJiggleChance.ValueChanged += (s, e) => OnTransitionPropertyChanged();
-            _grpTransition.Controls.Add(_nudTransJiggleChance);
+            _pnlTransTrap.Controls.Add(_nudTransJiggleChance);
 
-            _nudTransOpenChance = new NumericUpDown { Left = 188, Top = 230, Width = 89, Minimum = 0, Maximum = 100, Value = 100, Font = new Font("Segoe UI", 7.5f), Enabled = false };
+            _nudTransOpenChance = new NumericUpDown { Left = 178, Top = 46, Width = 89, Minimum = 0, Maximum = 100, Value = 100, Font = new Font("Segoe UI", 7.5f) };
             _nudTransOpenChance.ValueChanged += (s, e) => OnTransitionPropertyChanged();
-            _grpTransition.Controls.Add(_nudTransOpenChance);
+            _pnlTransTrap.Controls.Add(_nudTransOpenChance);
 
             // Behavior
             _chkTransOpen = new CheckBox { Text = "Starts Open (Unblocked)", Left = 10, Top = 258, AutoSize = true, Font = new Font("Segoe UI", 8f) };
@@ -2288,6 +2294,139 @@ namespace GridLockedEditor
             }
         }
 
+        private void UpdateTileInspectorVisibility()
+        {
+            if (_grpTileBase == null) return;
+
+            // 1. Breakable HP spinner & label
+            if (_lblBHP != null && _nudTileBreakHP != null && _chkTileBreakable != null)
+            {
+                bool isBreakable = _chkTileBreakable.Checked;
+                _lblBHP.Visible = isBreakable;
+                _nudTileBreakHP.Visible = isBreakable;
+            }
+
+            // 2. Can Be Opened -> Is Open checkbox
+            if (_chkTileIsOpen != null && _chkTileCanBeOpened != null)
+            {
+                _chkTileIsOpen.Visible = _chkTileCanBeOpened.Checked;
+            }
+
+            // 3. Hazardous: If checked, show the hazard container panel. If unchecked, hide completely!
+            if (_pnlTileHazard != null && _chkTileHazardous != null)
+            {
+                bool isHaz = _chkTileHazardous.Checked;
+                _pnlTileHazard.Visible = isHaz;
+
+                if (isHaz)
+                {
+                    bool isCustom = _cbTileHazardPreset == null || _cbTileHazardPreset.SelectedIndex <= 0;
+                    if (_pnlTileHazardCustom != null)
+                    {
+                        _pnlTileHazardCustom.Visible = isCustom;
+                    }
+
+                    if (_lblTileHazardSummary != null)
+                    {
+                        _lblTileHazardSummary.Top = (isCustom && _pnlTileHazardCustom != null) ? (_pnlTileHazardCustom.Bottom + 4) : 26;
+                        _lblTileHazardSummary.Visible = true;
+                    }
+
+                    _pnlTileHazard.Height = (_lblTileHazardSummary != null) ? (_lblTileHazardSummary.Bottom + 4) : 55;
+                }
+
+                // Dynamic card height
+                int curBottom = isHaz ? _pnlTileHazard.Bottom : _chkTileHazardous.Bottom;
+                if (_btnSpawnEntityHere != null && _btnSpawnEntityHere.Visible)
+                {
+                    _btnSpawnEntityHere.Top = curBottom + 8;
+                    _grpTileBase.Height = _btnSpawnEntityHere.Bottom + 12;
+                }
+                else
+                {
+                    _grpTileBase.Height = curBottom + 12;
+                }
+            }
+
+            ReflowInspectorCards();
+        }
+
+        private void UpdateEntityCardLayout()
+        {
+            if (_grpEntityCard == null) return;
+            bool isUnique = _chkEntityUnique != null && _chkEntityUnique.Checked;
+            if (_lblEntityTitle != null) _lblEntityTitle.Visible = isUnique;
+            if (_txtEntityTitle != null) _txtEntityTitle.Visible = isUnique;
+
+            int curY = 118; // Top of _chkEntityUnique
+            curY += 24;
+
+            if (isUnique)
+            {
+                if (_lblEntityTitle != null) { _lblEntityTitle.Top = curY + 2; _lblEntityTitle.Visible = true; }
+                if (_txtEntityTitle != null) { _txtEntityTitle.Top = curY; _txtEntityTitle.Visible = true; }
+                curY += 28;
+            }
+
+            if (_chkEntityArchetypeLoot != null) { _chkEntityArchetypeLoot.Top = curY; curY += 20; }
+            if (_chkEntityZoneLoot != null) { _chkEntityZoneLoot.Top = curY; curY += 22; }
+            if (_lblCustomLoot != null) _lblCustomLoot.Top = curY + 3;
+            if (_cbEntityCustomLoot != null) { _cbEntityCustomLoot.Top = curY; curY += 26; }
+            if (_lblGuaranteedDrop != null) { _lblGuaranteedDrop.Top = curY; curY += 18; }
+            if (_cbGuaranteedItem != null) _cbGuaranteedItem.Top = curY + 1;
+            if (_btnAddGuaranteedDrop != null) { _btnAddGuaranteedDrop.Top = curY; curY += 28; }
+            if (_lbGuaranteedDrops != null) _lbGuaranteedDrops.Top = curY;
+            if (_btnRemoveGuaranteedDrop != null) _btnRemoveGuaranteedDrop.Top = curY;
+            curY += 60;
+
+            _grpEntityCard.Height = curY + 12;
+            ReflowInspectorCards();
+        }
+
+        private void UpdateTransitionCardLayout()
+        {
+            if (_grpTransition == null) return;
+            int curY = 112;
+
+            if (_chkTransLocked != null)
+            {
+                _chkTransLocked.Top = curY;
+                curY += 24;
+                bool isLocked = _chkTransLocked.Checked;
+                if (_cbTransKey != null)
+                {
+                    _cbTransKey.Visible = isLocked;
+                    if (isLocked)
+                    {
+                        _cbTransKey.Top = curY;
+                        curY += 28;
+                    }
+                }
+            }
+
+            if (_chkTransTrapped != null)
+            {
+                _chkTransTrapped.Top = curY;
+                curY += 24;
+                bool isTrapped = _chkTransTrapped.Checked;
+                if (_pnlTransTrap != null)
+                {
+                    _pnlTransTrap.Visible = isTrapped;
+                    if (isTrapped)
+                    {
+                        _pnlTransTrap.Top = curY;
+                        curY += _pnlTransTrap.Height + 6;
+                    }
+                }
+            }
+
+            if (_chkTransOpen != null) { _chkTransOpen.Top = curY; curY += 24; }
+            if (_chkTransAuto != null) { _chkTransAuto.Top = curY; curY += 26; }
+
+            _grpTransition.Height = curY + 10;
+            ReflowInspectorCards();
+        }
+
         private void ReflowInspectorCards()
         {
             if (_inspectorPanel == null) return;
@@ -2348,6 +2487,7 @@ namespace GridLockedEditor
                 _chkTileIsOpen.Checked = tile.IsOpen;
                 _chkTileHazardous.Checked = tile.IsHazardous;
                 PopulateHazardControls(tile);
+                UpdateTileInspectorVisibility();
 
                 // 1. Entity / Creature Card
                 bool hasEntity = tile.CenterOccupant is MonsterInstance;
@@ -2373,8 +2513,8 @@ namespace GridLockedEditor
 
                     _nudEntityLevel.Value = Math.Max(1, Math.Min(20, m.Level));
                     _chkEntityUnique.Checked = m.IsUnique;
-                    _txtEntityTitle.Enabled = m.IsUnique;
                     _txtEntityTitle.Text = m.UniqueTitle ?? "";
+                    UpdateEntityCardLayout();
 
                     _chkEntityArchetypeLoot.Checked = m.DropArchetypeLoot;
                     _chkEntityZoneLoot.Checked = m.DropZoneLoot;
@@ -2503,6 +2643,7 @@ namespace GridLockedEditor
 
                         _chkTransOpen.Checked = trans.IsOpen;
                         _chkTransAuto.Checked = trans.AutoTransitionOnStep;
+                        UpdateTransitionCardLayout();
                     }
                 }
 
@@ -3343,6 +3484,7 @@ namespace GridLockedEditor
             });
 
             _painter.Invalidate();
+            UpdateTileInspectorVisibility();
         }
 
         private void OnInspectorTileTypeChanged()
